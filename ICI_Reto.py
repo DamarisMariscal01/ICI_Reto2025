@@ -1,131 +1,212 @@
-"""
-A01647993 Christian André Salgado Ledezma
-A01648054 Damaris Mariel Ramos Mariscal
-A016
-A016
-A016
-"""
-
 import math
 import tkinter as tk
+from tkinter import messagebox
 
-root = tk.Tk()
-root.geometry("800x600")
+# Constante gravitacional
+G = 6.67428e-11  
 
-label = tk.Label(root, text="Exoplanet Information Calculator", font=("Arial", 24))
-label.pack(padx=20, pady=20)
+class ExoplanetApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.geometry("800x600")
+        self.root.title("Exoplanet Information Calculator")
 
-label = tk.Label(root, text="Select the equation you want to solve:", font=("Arial", 18))
-label.pack(pady=10)
+        # Mostrar la página inicial
+        self.home_page()
 
-btn_pad = 16
+    def clear_frame(self):
+        """Eliminar todos los widgets de la ventana"""
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
-frame = tk.Frame(root)
-frame.place(relx=0.5, rely=0.45, anchor='center')
+    def home_page(self):
+        """Mostrar la página principal con 6 botones"""
+        self.clear_frame()
 
-frame.grid_columnconfigure(0, weight=1)
-frame.grid_columnconfigure(1, weight=1)
+        tk.Label(self.root, text="Exoplanet Information Calculator", font=("Arial", 24)).pack(pady=20)
+        tk.Label(self.root, text="Select the equation you want to solve:", font=("Arial", 18)).pack(pady=10)
 
-button_font = ("Arial", 14)
-btn_pad = 10
-btn_ipady = 15
+        frame = tk.Frame(self.root)
+        frame.place(relx=0.5, rely=0.45, anchor="center")
 
-buttonExcentricity = tk.Button(frame, text="Excentricity", font=button_font, width=15)
-buttonExcentricity.grid(row=0, column=0, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky='ew')
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=1)
 
-buttonOrbitalPeriod = tk.Button(frame, text="Orbital Period", font=button_font, width=15)
-buttonOrbitalPeriod.grid(row=0, column=1, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky='ew')
+        button_font = ("Arial", 14)
+        btn_pad = 10
+        btn_ipady = 15
 
-buttonMajorAxis = tk.Button(frame, text="Major Axis", font=button_font)
-buttonMajorAxis.grid(row=1, column=0, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky='ew')
+        # Botones de operaciones
+        buttons = [
+            ("Excentricity", self.excentricity_page),
+            ("Orbital Period", self.orbital_period_page),
+            ("Major Axis", self.major_axis_page),
+            ("Minor Axis", self.minor_axis_page),
+            ("Perihelion", self.perihelion_page),
+            ("Aphelion", self.aphelion_page)
+        ]
 
-buttonMinorAxis = tk.Button(frame, text="Minor Axis", font=button_font)
-buttonMinorAxis.grid(row=1, column=1, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky='ew')
+        # Crear botones en grid 2x3
+        for i, (text, command) in enumerate(buttons):
+            row, col = divmod(i, 2)
+            tk.Button(frame, text=text, font=button_font, width=15, command=command)\
+                .grid(row=row, column=col, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky="ew")
 
-buttonPerihelion = tk.Button(frame, text="Perihelion", font=button_font)
-buttonPerihelion.grid(row=2, column=0, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky='ew')
+    def show_result(self, result):
+        """Mostrar el resultado y botón Done"""
+        self.clear_frame()
+        tk.Label(self.root, text=f"Result: {result}", font=("Arial", 18)).pack(pady=30)
+        tk.Button(self.root, text="Done", width=20, height=2, command=self.home_page).pack(pady=20)
 
-buttonAphelion = tk.Button(frame, text="Aphelion", font=button_font)
-buttonAphelion.grid(row=2, column=1, padx=btn_pad, pady=btn_pad, ipady=btn_ipady, sticky='ew')
+    # ---- PÁGINAS PARA CADA CÁLCULO ----
 
-root.mainloop()
+    def excentricity_page(self):
+        """Calcular excentricidad"""
+        self.clear_frame()
+        tk.Label(self.root, text="Excentricity Calculator", font=("Arial", 18)).pack(pady=20)
 
-G = 6.67428e-11  # Gravitational constant in m^3 kg^-1 s^-2
-M = float(input("Enter the mass of the central body in kilograms: "))
+        tk.Label(self.root, text="Semi-major axis (a) [m]:").pack()
+        entry_a = tk.Entry(self.root)
+        entry_a.pack(pady=5)
 
-excentricity = float(input("Enter the eccentricity of the orbit: "))
-orbitalPeriod = float(input("Enter the orbital period in seconds: "))
-majorAxis = float(input("Enter the semi-major axis in meters: "))
-minorAxis = float(input("Enter the semi-minor axis in meters: "))
-perihelion = float(input("Enter the perihelion distance in meters: "))
-aphelion = float(input("Enter the aphelion distance in meters: "))
+        tk.Label(self.root, text="Semi-minor axis (b) [m]:").pack()
+        entry_b = tk.Entry(self.root)
+        entry_b.pack(pady=5)
 
-def excentricityCalculator(majorAxis, minorAxis):
-    """
-    Calculate the excentricity of an ellipse given its semi-major axis (a) and semi-minor axis (b).
-    
-    Parameters:
-    a (float): Semi-major axis of the ellipse.
-    b (float): Semi-minor axis of the ellipse.
-    
-    Returns:
-    float: Excentricity of the ellipse.
-    """
-    if majorAxis <= 0 or minorAxis <= 0:
-        raise ValueError("Semi-major and semi-minor axes must be positive numbers.")
-    
-    return math.sqrt(1 - (minorAxis**2 / majorAxis**2))
+        def calculate():
+            try:
+                a = float(entry_a.get())
+                b = float(entry_b.get())
+                result = math.sqrt(1 - (b**2 / a**2))
+                self.show_result(result)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
 
-def orbitalPeriodCalculator(majorAxis, M):
-    """
-    Calculate the orbital period of a planet using Kepler's third law.
-    
-    Parameters:
-    a (float): Semi-major axis of the orbit in meters.
-    M (float): Mass of the central body in kilograms.
-    
-    Returns:
-    float: Orbital period in seconds.
-    """
-    if majorAxis <= 0 or M <= 0:
-        raise ValueError("Semi-major axis and mass must be positive numbers.")
-    
-    return 2 * math.pi * math.sqrt(majorAxis**3 / (G * M))
+        tk.Button(self.root, text="Calculate", command=calculate).pack(pady=20)
 
-def majorAxisCalculator(perihelion, aphelion):
-    """
-    Calculate the semi-major axis of an orbit given the perihelion and aphelion distances.
-    
-    Parameters:
-    perihelion (float): Distance at the closest approach to the central body in meters.
-    aphelion (float): Distance at the farthest point from the central body in meters.
-    
-    Returns:
-    float: Semi-major axis in meters.
-    """
-    if perihelion <= 0 or aphelion <= 0:
-        raise ValueError("Perihelion and aphelion must be positive numbers.")
-    
-    return (perihelion + aphelion) / 2
+    def orbital_period_page(self):
+        """Calcular periodo orbital"""
+        self.clear_frame()
+        tk.Label(self.root, text="Orbital Period Calculator", font=("Arial", 18)).pack(pady=20)
 
-def minorAxisCalculator(majorAxis, excentricity):
-    """
-    Calculate the semi-minor axis of an orbit given the semi-major axis and excentricity.
-    
-    Parameters:
-    majorAxis (float): Semi-major axis of the orbit in meters.
-    excentricity (float): Excentricity of the orbit.
-    
-    Returns:
-    float: Semi-minor axis in meters.
-    """
-    if majorAxis <= 0 or not (0 <= excentricity < 1):
-        raise ValueError("Semi-major axis must be positive and excentricity must be in the range [0, 1).")
-    
-    return majorAxis * math.sqrt(1 - excentricity**2)
+        tk.Label(self.root, text="Semi-major axis (a) [m]:").pack()
+        entry_a = tk.Entry(self.root)
+        entry_a.pack(pady=5)
 
-def perihelionCalculator(majorAxis, excentricity):
-    majorAxis * (1 - excentricity)
+        tk.Label(self.root, text="Mass of central body (M) [kg]:").pack()
+        entry_m = tk.Entry(self.root)
+        entry_m.pack(pady=5)
 
-def aphelionCalculator(majorAxis, excentricity):
-    majorAxis * (1 + excentricity)
+        def calculate():
+            try:
+                a = float(entry_a.get())
+                M = float(entry_m.get())
+                result = 2 * math.pi * math.sqrt(a**3 / (G * M))
+                self.show_result(result)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(self.root, text="Calculate", command=calculate).pack(pady=20)
+
+    def major_axis_page(self):
+        """Calcular semi-eje mayor"""
+        self.clear_frame()
+        tk.Label(self.root, text="Major Axis Calculator", font=("Arial", 18)).pack(pady=20)
+
+        tk.Label(self.root, text="Perihelion (q) [m]:").pack()
+        entry_q = tk.Entry(self.root)
+        entry_q.pack(pady=5)
+
+        tk.Label(self.root, text="Aphelion (Q) [m]:").pack()
+        entry_Q = tk.Entry(self.root)
+        entry_Q.pack(pady=5)
+
+        def calculate():
+            try:
+                q = float(entry_q.get())
+                Q = float(entry_Q.get())
+                result = (q + Q) / 2
+                self.show_result(result)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(self.root, text="Calculate", command=calculate).pack(pady=20)
+
+    def minor_axis_page(self):
+        """Calcular semi-eje menor"""
+        self.clear_frame()
+        tk.Label(self.root, text="Minor Axis Calculator", font=("Arial", 18)).pack(pady=20)
+
+        tk.Label(self.root, text="Semi-major axis (a) [m]:").pack()
+        entry_a = tk.Entry(self.root)
+        entry_a.pack(pady=5)
+
+        tk.Label(self.root, text="Excentricity (e):").pack()
+        entry_e = tk.Entry(self.root)
+        entry_e.pack(pady=5)
+
+        def calculate():
+            try:
+                a = float(entry_a.get())
+                e = float(entry_e.get())
+                result = a * math.sqrt(1 - e**2)
+                self.show_result(result)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(self.root, text="Calculate", command=calculate).pack(pady=20)
+
+    def perihelion_page(self):
+        """Calcular perihelio"""
+        self.clear_frame()
+        tk.Label(self.root, text="Perihelion Calculator", font=("Arial", 18)).pack(pady=20)
+
+        tk.Label(self.root, text="Semi-major axis (a) [m]:").pack()
+        entry_a = tk.Entry(self.root)
+        entry_a.pack(pady=5)
+
+        tk.Label(self.root, text="Excentricity (e):").pack()
+        entry_e = tk.Entry(self.root)
+        entry_e.pack(pady=5)
+
+        def calculate():
+            try:
+                a = float(entry_a.get())
+                e = float(entry_e.get())
+                result = a * (1 - e)
+                self.show_result(result)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(self.root, text="Calculate", command=calculate).pack(pady=20)
+
+    def aphelion_page(self):
+        """Calcular afelio"""
+        self.clear_frame()
+        tk.Label(self.root, text="Aphelion Calculator", font=("Arial", 18)).pack(pady=20)
+
+        tk.Label(self.root, text="Semi-major axis (a) [m]:").pack()
+        entry_a = tk.Entry(self.root)
+        entry_a.pack(pady=5)
+
+        tk.Label(self.root, text="Excentricity (e):").pack()
+        entry_e = tk.Entry(self.root)
+        entry_e.pack(pady=5)
+
+        def calculate():
+            try:
+                a = float(entry_a.get())
+                e = float(entry_e.get())
+                result = a * (1 + e)
+                self.show_result(result)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(self.root, text="Calculate", command=calculate).pack(pady=20)
+
+
+# ---- EJECUTAR APP ----
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ExoplanetApp(root)
+    root.mainloop()
